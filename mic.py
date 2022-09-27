@@ -91,21 +91,3 @@ def main(model, english,verbose, energy, pause, dynamic_energy):
             index = 0
                 
 main()
-"""
-                audio = r.listen(source, timeout=5)
-                print(datetime.now() - prevTime)
-                print('converting...')
-                data = io.BytesIO(audio.get_wav_data())
-                print('saving audio...')
-                audio_clip = AudioSegment.from_file(data)
-                audio_clip.export(save_path, format="wav")
-                
-                time = datetime.now()
-                print('transcribing...')
-                result = audio_model.transcribe(save_path)
-                print(datetime.now() - time)
-                if not verbose:
-                    predicted_text = result["text"]
-                    print("You said: " + predicted_text)
-                else:
-                    print(result)"""
