@@ -8,10 +8,7 @@ import tempfile
 import os
 import click
 from datetime import datetime
-
-temp_dir = tempfile.mkdtemp()
-save_path = os.path.join(temp_dir, "temp.wav")
-
+import json
 
 @click.command()
 @click.option("--model", default="base", help="Model to use", type=click.Choice(["tiny","base", "small","medium","large"]))
@@ -21,8 +18,9 @@ save_path = os.path.join(temp_dir, "temp.wav")
 @click.option("--dynamic_energy", default=False,is_flag=True, help="Flag to enable dynamic engergy", type=bool)
 @click.option("--pause", default=0.8, help="Pause time before entry ends", type=float)
 
-def main(model, english,verbose, energy, pause,dynamic_energy):
+def main(model, english,verbose, energy, pause, dynamic_energy):
     #there are no english models for large
+    model = "medium"
     if model != "large" and english:
         model = model + ".en"
     audio_model = whisper.load_model(model)    
@@ -35,35 +33,42 @@ def main(model, english,verbose, energy, pause,dynamic_energy):
 
     RATE = 44100
     CHANNELS = 2
-    DEVICE_INDEX = 11
+    DEVICE_INDEX = 5
     FORMAT = pyaudio.paInt16
     FRAMESBUFF = 1024
     SECONDS = 5
+    AUDIO_FILE = 5
 
     daudio = pyaudio.PyAudio()
+    
+    '''
+    deviceList = []
     for i in range(0, daudio.get_device_count()):
-        print(daudio.get_device_info_by_index(i))
+        deviceList.append(daudio.get_device_info_by_index(i))
+    
+    with open('device.json', 'w') as w:
+        json.dump(deviceList, w , indent=4, separators=[',',':'])
+        print(daudio.get_default_input_device_info().get('index'))
+        print(daudio.get_default_output_device_info().get('index'))
+    '''
     audiostream = daudio.open(output_device_index=DEVICE_INDEX,
                                 rate=RATE, 
                                 input=True, 
                                 channels=CHANNELS,
                                 format=FORMAT,
-                                frames_per_buffer=FRAMESBUFF)
-    print("Say something!")
+                                frames_per_buffer=FRAMESBUFF,
+                                )
     index = 0
     while True:
-        #get and save audio to wav file
-        prevTime = datetime.now()
         #try:
         print('listening...')
         frame = []
         audiostream.start_stream()
-        for i in range(0, int(RATE / FRAMESBUFF * SECONDS)):
+        for i in range(0, int(RATE / FRAMESBUFF *  SECONDS)):
             data = audiostream.read(FRAMESBUFF)
             frame.append(data)
 
         audiostream.stop_stream()
-        print(datetime.now() - prevTime)
         print('saving audio file')
         audioPath = f"audio/audio{index}.wav"
         with wave.open(audioPath, 'wb') as w:
@@ -72,6 +77,7 @@ def main(model, english,verbose, energy, pause,dynamic_energy):
             w.setframerate(RATE)
             w.writeframes(b''.join(frame))
             w.close()
+
         print('transcribing...')
         result = audio_model.transcribe(audioPath)
         if not verbose:
@@ -79,7 +85,10 @@ def main(model, english,verbose, energy, pause,dynamic_energy):
             print("You said: " + predicted_text)
         else:
             print(result)
+
         index += 1
+        if index > AUDIO_FILE:
+            index = 0
                 
 main()
 """
