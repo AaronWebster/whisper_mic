@@ -2,15 +2,12 @@
 import sounddevice as sd
 import whisper
 from scipy.io import wavfile
-import argostranslate.package
-import argostranslate.translate
 import translate as translate
 import asyncio
 
 async def main():
     #there are no english models for large
     model = "medium"
-    verbose = True
     audio_model = whisper.load_model(model)    
 
     RATE = 44100
@@ -23,7 +20,6 @@ async def main():
     #print(sd.query_devices())
     sd.default.device[0] = DEVICE_INDEX
     index = 0
-    isPackage = True
     while True:
         #try:
         print('listening...')
