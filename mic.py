@@ -2,42 +2,42 @@
 import sounddevice as sd
 import whisper
 from scipy.io import wavfile
-import translate as translate
 import asyncio
 
 async def main():
-    #there are no english models for large
     model = "medium"
     audio_model = whisper.load_model(model)    
 
     RATE = 44100
     CHANNELS = 2
     DEVICE_INDEX = 2
-    SECONDS = 10
+    SECONDS = 5
     AUDIO_FILE = 5
-    TO_CODE = 'en'
 
-    #print(sd.query_devices())
+    '''uncomment to print all devices index '''
+    #print(sd.query_devices()) 
+
     sd.default.device[0] = DEVICE_INDEX
+    sd.default.dtype[0] = 'float32'
     index = 0
-    while True:
-        #try:
-        print('listening...')
-        audioPath = f"audio/audio{index}.wav"
-        recording = sd.rec(frames=RATE * SECONDS, samplerate = RATE, blocking=True, channels=CHANNELS)
-        sd.wait()
-        wavfile.write(audioPath, rate=RATE, data=recording)
 
-        print('transcribing...')
-        result = audio_model.transcribe(audioPath)
-        language: str= result.get('language')
-        
-        # Translate
-        if language != TO_CODE:
-            translatedText = await translate.translate(result.get('text'), language, TO_CODE)
+    while True:
+        recording = sd.rec(frames=RATE * SECONDS, samplerate = RATE, blocking=True, channels=CHANNELS, dtype='float32')
+        if index == 0:
+            indexPath = AUDIO_FILE
         else:
+            indexPath = index - 1
+
+        try:
+            result = audio_model.transcribe(f"audio/audio{indexPath}.wav", no_speech_threshold=0.6, **{"task":"translate"})
+            print('\n')
             translatedText = result.get('text')
-        print(translatedText)
+            print(translatedText)
+        except:
+            print("no audio track recorded yet")
+            
+        sd.stop()
+        wavfile.write(f"audio/audio{index}.wav", rate=RATE, data=recording)
 
         index += 1
         if index > AUDIO_FILE:
