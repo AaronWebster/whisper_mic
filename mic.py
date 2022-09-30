@@ -22,7 +22,7 @@ async def main():
     index = 0
 
     while True:
-        recording = sd.rec(frames=RATE * SECONDS, samplerate = RATE, blocking=True, channels=CHANNELS, dtype='float32')
+        recording = sd.rec(frames=RATE * SECONDS, samplerate = RATE, channels=CHANNELS, dtype='float32')
         if index == 0:
             indexPath = AUDIO_FILE
         else:
