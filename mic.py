@@ -36,7 +36,7 @@ async def main():
         except:
             print("no audio track recorded yet")
             
-        sd.stop()
+        sd.wait()
         wavfile.write(f"audio/audio{index}.wav", rate=RATE, data=recording)
 
         index += 1
