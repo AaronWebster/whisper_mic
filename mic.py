@@ -1,55 +1,49 @@
-import io
-from pydub import AudioSegment
-import speech_recognition as sr
+#!/usr/bin/env python3
+
+import sounddevice as sd
 import whisper
-import tempfile
-import os
-import click
+from scipy.io import wavfile
+import asyncio
 
 
-temp_dir = tempfile.mkdtemp()
-save_path = os.path.join(temp_dir, "temp.wav")
-
-
-@click.command()
-@click.option("--model", default="base", help="Model to use", type=click.Choice(["tiny","base", "small","medium","large"]))
-@click.option("--language", default=None, help="Spoken language in whisper.torknizer.LANGUAGES", type=str)
-@click.option("--verbose", default=False, help="Whether to print verbose output", is_flag=True,type=bool)
-@click.option("--energy", default=300, help="Energy level for mic to detect", type=int)
-@click.option("--dynamic_energy", default=False,is_flag=True, help="Flag to enable dynamic engergy", type=bool)
-@click.option("--pause", default=0.8, help="Pause time before entry ends", type=float)
-@click.option('--fp16', default=False, help='Whether to perform inference in fp16; False by default', is_flag=True, type=bool)
-def main(model, language, verbose, energy, pause,dynamic_energy, fp16):
-    #there are no english models for large
-    if model != "large" and language == 'en':
-        model = model + ".en"
+async def main():
+    model = 'medium'
     audio_model = whisper.load_model(model)
-    
-    #load the speech recognizer and set the initial energy threshold and pause threshold
-    r = sr.Recognizer()
-    r.energy_threshold = energy
-    r.pause_threshold = pause
-    r.dynamic_energy_threshold = dynamic_energy
 
-    with sr.Microphone(device_index=1, sample_rate=16000) as source:
-        print('Microphone:', source.list_microphone_names()[1])
-        print("Say something!")
-        while True:
-            #get and save audio to wav file
-            audio = r.listen(source)
-            data = io.BytesIO(audio.get_wav_data())
-            audio_clip = AudioSegment.from_file(data)
-            audio_clip.export(save_path, format="wav")
+    RATE = 44100
+    CHANNELS = 2
+    DEVICE_INDEX = 2
+    SECONDS = 5
+    AUDIO_FILE = 5
 
-            if language is not None:
-                result = audio_model.transcribe(save_path, language=language, fp16=fp16)
-            else:
-                result = audio_model.transcribe(save_path, fp16=fp16)
+    sd.default.device[0] = DEVICE_INDEX
+    sd.default.dtype[0] = 'float32'
+    index = 0
 
-            if not verbose:
-                predicted_text = result["text"]
-                print(">", predicted_text)
-            else:
-                print(result)
-                
-main()
+    while True:
+        recording = sd.rec(frames=RATE * SECONDS, samplerate=RATE,
+                           channels=CHANNELS, dtype='float32')
+        if index == 0:
+            indexPath = AUDIO_FILE
+        else:
+            indexPath = index - 1
+
+        try:
+            result = audio_model.transcribe(
+                f'audio/audio{indexPath}.wav', no_speech_threshold=0.6, **{'task': 'translate'})
+            print('\n')
+            translatedText = result.get('text')
+            print(translatedText)
+        except:
+            print('no audio track recorded yet')
+
+        sd.wait()
+        wavfile.write(f'audio/audio{index}.wav', rate=RATE, data=recording)
+
+        index += 1
+        if index > AUDIO_FILE:
+            index = 0
+
+if __name__ == '__main__':
+    print(sd.query_devices())
+    asyncio.get_event_loop().run_until_complete(main())
