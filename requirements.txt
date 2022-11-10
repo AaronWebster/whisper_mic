@@ -10,3 +10,4 @@ sounddevice
 scipy
 asyncio
 aiohttp
+pyttsx3
