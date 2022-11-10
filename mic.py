@@ -6,7 +6,7 @@ from scipy.io import wavfile
 import asyncio
 
 async def main():
-    model = 'medium'
+    model = 'tiny'
     audio_model = whisper.load_model(model)
 
     RATE = 44100
