@@ -26,13 +26,16 @@ def main(argv: Sequence[str]) -> None:
     if len(argv) > 1:
         raise app.UsageError('Too many command-line arguments.')
 
-    drill_sizes = []
+    drill_sizes = {}
+    drill_index = 1
     with open(DRILL_SIZES_FILENAME, 'r') as f:
         for line in f.readlines():
-            drill_sizes.append(line.strip())
+            drill_sizes[drill_index] = line.strip()
+            drill_index = drill_index + 1
 
     if len(drill_sizes) != EXPECTED_DRILL_SIZES_LENGTH:
-        logging.fatal('Wrong number of drill sizes in chart.  Got %d, should be %d', len(drill_sizes), EXPECTED_DRILL_SIZES_LENGTH)
+        logging.fatal('Wrong number of drill sizes in chart.  Got %d, should be %d', len(
+            drill_sizes), EXPECTED_DRILL_SIZES_LENGTH)
 
     temp_dir = tempfile.mkdtemp()
     save_path = os.path.join(temp_dir, 'temp.wav')
