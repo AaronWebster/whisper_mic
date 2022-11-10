@@ -18,11 +18,21 @@ MODEL = 'tiny'
 ENERGY = 300
 DYNAMIC_ENERGY = None
 PAUSE_SEC = 0.8
+DRILL_SIZES_FILENAME = 'drill_size_chart.txt'
+EXPECTED_DRILL_SIZES_LENGTH = 107
 
 
 def main(argv: Sequence[str]) -> None:
     if len(argv) > 1:
         raise app.UsageError('Too many command-line arguments.')
+
+    drill_sizes = []
+    with open(DRILL_SIZES_FILENAME, 'r') as f:
+        for line in f.readlines():
+            drill_sizes.append(line.strip())
+
+    if len(drill_sizes) != EXPECTED_DRILL_SIZES_LENGTH:
+        logging.fatal('Wrong number of drill sizes in chart.  Got %d, should be %d', len(drill_sizes), EXPECTED_DRILL_SIZES_LENGTH)
 
     temp_dir = tempfile.mkdtemp()
     save_path = os.path.join(temp_dir, 'temp.wav')
