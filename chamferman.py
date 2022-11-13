@@ -65,7 +65,7 @@ def main(argv: Sequence[str]) -> None:
     logging.info('Initializing voice engine.')
     voice_engine = pyttsx3.init()
 
-    with speech_recognition.Microphone(sample_rate=16000, device_index=1) as source:
+    with speech_recognition.Microphone(sample_rate=16000) as source:
         logging.info('Listening.')
         while True:
             audio = recognizer.listen(source)
@@ -73,7 +73,7 @@ def main(argv: Sequence[str]) -> None:
             audio_clip = AudioSegment.from_file(data)
             audio_clip.export(audio_tmpfile, format='wav')
 
-            result = audio_model.to('gpu').transcribe(
+            result = audio_model.to('cuda').transcribe(
                 audio_tmpfile, language='english')
             command = result['text']
             logging.info(command)
